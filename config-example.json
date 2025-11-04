@@ -1,0 +1,10 @@
+{
+  "influxdb_client": {
+    "host": "http://127.0.0.1:8181",
+    "token": "",
+    "database": "dev"
+  },
+  "data_server_collector": {
+      "poll_interval_ms": 1000
+  }
+}

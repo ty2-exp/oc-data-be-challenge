@@ -1,0 +1,8 @@
+package: http
+generate:
+  chi-server: true
+  models: true
+  embedded-spec: false
+output-options:
+  nullable-type: false
+output: ../internal/transport/http/server_interface_gen.go

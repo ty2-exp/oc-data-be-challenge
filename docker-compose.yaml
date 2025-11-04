@@ -1,0 +1,47 @@
+name: influxdb3
+services:
+  influxdb3-admin-init:
+    depends_on:
+      - influxdb3-core
+    image: influxdb:3-core
+    command:
+      - influxdb3
+      - create
+      - token
+      - --admin
+    profiles:
+      - influxdb3-init
+    network_mode: "service:influxdb3-core"
+  influxdb3-core:
+    container_name: influxdb3-core
+    image: influxdb:3-core
+    user: "1000:1000"
+    command:
+      - influxdb3
+      - serve
+      - --node-id=node0
+      - --object-store=file
+      - --data-dir=/var/lib/influxdb3/data
+      - --plugin-dir=/var/lib/influxdb3/plugins
+    ports:
+      - "8181:8181"
+    volumes:
+      - type: bind
+        source: .influxdb3/core/data
+        target: /var/lib/influxdb3/data
+      - type: bind
+        source: .influxdb3/core/plugins
+        target: /var/lib/influxdb3/plugins
+  influxdb3-ui:
+    depends_on:
+      - influxdb3-core
+    image: influxdata/influxdb3-ui:1.4.0
+    command:
+      - --mode=admin
+    volumes:
+      - type: bind
+        source: .influxdb3/ui/data
+        target: /db
+    ports:
+      - "8888:80"
+      - "8889:8888"

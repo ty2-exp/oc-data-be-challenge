@@ -1,0 +1,79 @@
+#file: noinspection YAMLSchemaValidation,YAMLSchemaValidation
+version: '3'
+
+dotenv: ['.Taskfile.local.env', '.Taskfile.{{.ENV}}.env', '.Taskfile.default.env']
+
+env:
+  ENV: '{{.ENV | default "default"}}'
+
+vars:
+  DOCKER_IMAGE_OPENAPI_GENERATOR_CLI: openapitools/openapi-generator-cli:v7.10.0
+  OAPI_CODEGEN_PKG: github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@v2.4.1
+
+tasks:
+  default:
+    desc: "print available tasks"
+    cmds:
+      - task -l
+    silent: true
+
+  app:server-swagger-codegen:
+    desc: "generate the API server interface"
+    dir: api-spec
+    cmds:
+      - npm install
+      - npx tsp compile main.tsp
+      - |
+        go run -mod=mod {{.OAPI_CODEGEN_PKG}} \
+        -config oapi-codegen/config.yaml \
+        tsp-output/schema/openapi.yaml
+
+  app:dev:
+    desc: "run the app in local and auto reload on the file changes"
+    cmds:
+      - |
+        go run -mod=mod github.com/cespare/reflex@v0.3.1 -r '.*.go' -s -- go run cmd/main.go cmd/config.go
+
+  app:build-app-local:
+    desc: "build the app binary in local"
+    vars:
+      OUT: '{{env "BUILD_OUT" | default "dist/bin/out"}}'
+      SOURCE: 'cmd/*.go'
+      GIT_TAG:
+        # replace spaces with underscores, replace slash with underscores, replace newlines with commas, and
+        # remove the last character (comma)
+        sh: git tag --points-at HEAD | tr '/' '_' | tr ' ' '_' | tr '\n' ',' | sed 's/.$//g'
+      GIT_COMMIT:
+        sh: git rev-parse HEAD
+      IS_TAINT:
+        sh: |
+          [ -z "$(git status --untracked-files=no --porcelain)" ] && echo "0" || echo "1"
+      _GOOS:
+        sh: go env GOOS
+      _GOARCH:
+        sh: go env GOARCH
+      GOOS: '{{env "GOOS" | default .GOOS | default ._GOOS}}'
+      GOARCH: '{{env "GOARCH" | default .GOARCH | default ._GOARCH}}'
+    cmds:
+      - |
+        GOOS={{.GOOS}} GOARCH={{.GOARCH}} go build \
+        -ldflags "-X 'oc-data-be-challenge/internal/utils/version.tag={{.GIT_TAG}}' \
+        -X 'oc-data-be-challenge/internal/utils/version.revision={{.GIT_COMMIT}}' \
+        -X 'oc-data-be-challenge/internal/utils/version.buildDate=$(date -u +"%Y-%m-%dT%H:%M:%SZ")' \
+        -X 'oc-data-be-challenge/internal/utils/version.buildUser=$(whoami)' \
+        -X 'oc-data-be-challenge/internal/utils/version.buildHost=$(cat /etc/hostname)' \
+        -X 'oc-data-be-challenge/internal/utils/version.isTaint={{.IS_TAINT}}'" \
+        -o {{.OUT}} \
+        {{.SOURCE}}
+
+  dev:docker-influxdb3-setup-dirs:
+    desc: "initialize Docker Compose dirs for influxdb3 (data, plugins, ui) with proper ownership"
+    cmds:
+      - mkdir -p .influxdb3/core/data .influxdb3/core/plugins .influxdb3/ui/data
+      - chown -R 1000:1000 .influxdb3/core/data .influxdb3/core/plugins .influxdb3/ui/data
+
+  dev:docker-influxdb3-admin-token:
+    desc: "get the admin token for influxdb3"
+    cmds:
+      - |
+        docker compose logs influxdb3-admin-init | grep "Token:"

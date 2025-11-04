@@ -1,0 +1,5 @@
+.influxdb3/
+.idea/
+dist/
+
+config.json

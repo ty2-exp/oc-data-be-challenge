@@ -1,0 +1,73 @@
+openapi: 3.0.0
+info:
+  title: DataCosmos Backend Challenge Project
+  version: 0.0.0
+tags:
+  - name: Data Point
+paths:
+  /data-point:
+    get:
+      operationId: DataPoint_query
+      description: Query Data Point
+      parameters:
+        - name: start
+          in: query
+          required: false
+          schema:
+            type: string
+            format: duration
+          explode: false
+        - name: until
+          in: query
+          required: false
+          schema:
+            type: string
+            format: duration
+          explode: false
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DataPointModel'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      tags:
+        - Data Point
+components:
+  schemas:
+    DataPointModel:
+      type: object
+      required:
+        - time
+        - value
+      properties:
+        time:
+          type: string
+          format: duration
+        value:
+          type: number
+          format: float
+    Error:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+servers:
+  - url: http://127.0.0.1:8080
+    description: localhost endpoint
+    variables: {}
+  - url: '{any}'
+    description: Any endpoint
+    variables:
+      any:
+        default: https://127.0.0.1:8080
