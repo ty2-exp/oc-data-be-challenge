@@ -13,6 +13,7 @@ import (
 	"oc-data-be-challenge/internal/utils/version"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 	"time"
 
@@ -69,7 +70,10 @@ func main() {
 
 	// Setup and Start Data Collector
 	dataCollector := collector.NewDataServerCollector(uc, time.Millisecond*time.Duration(cfg.DataServerCollector.PollIntervalMs))
+	dataCollectorWg := sync.WaitGroup{}
 	go func() {
+		dataCollectorWg.Add(1)
+		defer dataCollectorWg.Done()
 		dataCollector.Start()
 	}()
 
@@ -111,6 +115,7 @@ func main() {
 		// Stop the data collector
 		logger.Info("Stopping data collector")
 		dataCollector.Stop()
+		dataCollectorWg.Wait()
 
 		// Create a context with timeout for shutdown
 		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)

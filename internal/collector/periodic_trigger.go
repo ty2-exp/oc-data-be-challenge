@@ -57,7 +57,8 @@ func (pt *PeriodicTrigger) start() {
 			pt.logger.Info("PeriodicTrigger stopping")
 			pt.triggerCtxCancelFunc()
 			ticker.Stop()
-			<-doneCh
+			doneCh <- struct{}{}
+
 		}
 	}()
 
@@ -71,9 +72,10 @@ func (pt *PeriodicTrigger) start() {
 				continue
 			}
 		case <-doneCh:
-			break
+			goto exitFor
 		}
 	}
+exitFor:
 }
 
 func (pt *PeriodicTrigger) Stop() {
