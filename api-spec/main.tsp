@@ -1,13 +1,13 @@
 import "@typespec/http";
 
 using TypeSpec.Http;
-@service(#{ title: "DataCosmos Backend Challenge Project" })
+@service(#{ title: "DC Backend Challenge Project" })
 @server("{any}", "Any endpoint", {
   any?: string = "https://127.0.0.1:8080",
 })
 @server("http://127.0.0.1:8080", "localhost endpoint")
 
-namespace DataCosmosChallenge;
+namespace DCChallenge;
 
 model DataPointModel {
   @encode(DurationKnownEncoding.ISO8601)

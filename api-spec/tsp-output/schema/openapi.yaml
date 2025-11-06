@@ -1,6 +1,6 @@
 openapi: 3.0.0
 info:
-  title: DataCosmos Backend Challenge Project
+  title: DC Backend Challenge Project
   version: 0.0.0
 tags:
   - name: Data Point
