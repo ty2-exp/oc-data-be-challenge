@@ -1,5 +1,8 @@
-.influxdb3/
 .idea/
+/*.iml
+
+.influxdb3/
+
 dist/
 
 config.json
